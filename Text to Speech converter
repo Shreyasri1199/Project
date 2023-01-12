@@ -1,0 +1,117 @@
+import tkinter as tk
+from tkinter import*
+from tkinter import filedialog
+from tkinter.ttk import Combobox
+import pyttsx3
+import os
+from gtts import gTTS
+from playsound import playsound
+import speech_recognition as sr
+#from tkvideo import tkvideo
+
+root=Tk()
+root.title("Text to Audio Converter")
+root.geometry("1000x600+200+80")
+root.resizable(False ,False)
+root.configure(bg="#FFAC7B")
+
+
+
+logo_image=PhotoImage(file="D:/python/textspeech.png")
+root.iconphoto(False,logo_image)
+
+
+
+tts=pyttsx3.init()
+def speaknow():
+    text=text_box.get(1.0,END)
+    gender=gender_box.get()
+    speed=speed_box.get()
+    voices=tts.getProperty("voices")
+    
+    def setvoice():
+        if gender=="Male":
+            tts.setProperty("voice",voices[0].id)
+            tts.say(text)
+            tts.runAndWait()
+        else:
+            tts.setProperty("voice",voices[1].id)
+            tts.say(text)
+            tts.runAndWait()
+    if(text):
+        if(speed=="Fast"):
+            tts.setProperty("rate",225)
+            setvoice()
+        elif (speed=="Medium"):
+            tts.setProperty("rate",150)
+            setvoice()
+        else:
+            tts.setProperty("rate",80)
+            setvoice()
+
+
+#def video():
+    #root=Tk()
+    #my_label= Label(root)
+    
+   # my_label.pack()
+    #tkvideo("")
+    
+    #root.mainloop()
+    
+
+    
+def speech():
+    r=sr.Recognizer()
+    with sr.Microphone()as source:
+        audio=r.listen(source)
+    try:
+        text=r.recognize_google(audio,language="eng-in")
+        return text
+    except:
+        pass
+    
+    
+upper_frame=Frame(root,bg="#FFFFFF",width=1200,height=140)
+upper_frame.place(x=0,y=0)
+Pictures=PhotoImage(file="D:/python/textspeech.png")
+Label(upper_frame,image=Pictures,bg="#11A7DD").place(x=70,y=20)
+
+Label(upper_frame,text="Text to Speech Converter",font="Arial 28 bold",bg="#F5EEF8",fg="#8E44AD").place(x=250,y=30)
+
+text_box=Text(root,font="Arial 20", bg="white", relief= GROOVE, wrap= WORD, bd=0)
+text_box.place(x=10,y=150,width=970,height=180)
+
+scroll_bar=Scrollbar(text_box)
+scroll_bar.pack(side=RIGHT,fill=Y)
+
+def show():
+    text_box.insert(END,str(speech()))
+    
+gender_box=Combobox(root,values=["Male","Female"],font="Robote 12", state="r",width=12)
+gender_box.place(x=200,y=400)
+gender_box.set("Male")
+
+
+speed_box=Combobox(root,values=["Fast","Medium","Slow"],font="Robote 12",state="r",width=12)
+speed_box.place(x=500,y=400)
+speed_box.set("Medium")
+
+Label(root,text="Select Voice",font="TimesNewroman 15 bold",bg="#FFA777",fg="white").place(x=200,y=370)
+Label(root,text="Select Speed",font="TimesNewroman 15 bold",bg="#FFA777",fg="white").place(x=500,y=370)
+
+
+
+play_button=PhotoImage(file="D:/python/download.png")
+play_btn=Button(root,text="Play",compound=TOP,image=play_button,bg="white",width=150,font="TimesNewroman 15 bold",borderwidth=5,command=speaknow)
+play_btn.place(x=200,y=450)
+
+scroll_bar.config(command=text_box.yview)
+text_box.config(yscrollcommand=scroll_bar.set)
+
+speech_button=PhotoImage(file="D:/python/speech.png")
+speech_btn=Button(root,text="Speech",compound=LEFT,image=speech_button,bg="white",width=170,font="TimesNewroman 12 bold",borderwidth=5,command=show)
+speech_btn.place(x=500,y=450)
+root.mainloop()
+
+
