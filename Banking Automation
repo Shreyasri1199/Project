@@ -1,0 +1,473 @@
+from tkinter import *
+from tkinter import ttk
+from tkinter.ttk import Combobox
+import time
+from tkinter import messagebox
+import pymysql
+con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+cur=con.cursor()
+con.commit()
+
+
+win=Tk()
+win.state('zoomed')
+win.title('Banking')
+win.resizable(height=False,width=False)
+win_btn_clr="powder blue"
+win.configure(bg=win_btn_clr)
+
+lbl_title=Label(win,text="Banking Automation",font=('Arial',40,'bold','underline'),bd=5,bg='red')
+lbl_title.pack()
+
+photo=PhotoImage(file="bank.png")
+lbl_img=Label(win,image=photo)
+lbl_img.place(x=0,y=0)
+
+
+def home_screen():
+    frm=Frame(win)
+    frm.configure(bg='purple')
+    frm.place(relx=0,rely=.15,relwidth=1,relheight=.85)
+
+    def openacn_click():
+        frm.destroy()
+        openacn_screen()
+    
+    def frgt():
+        frm.destroy()
+        frgt_screen()
+        
+    def welc():
+        global acn
+        acn=e_acn.get()
+        pswrd=e_pswrd.get()
+        
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute("select acn_name from account where acn_no=%s and acn_pass=%s",(acn,pswrd))
+        user_tup=cur.fetchone()
+        if(user_tup==None):
+            messagebox.showerror('Login Details','Invalid Details')
+        else:
+            global uname
+            uname=user_tup[0]
+            
+            frm.destroy()
+            welcome_screen()
+        
+            
+    def reset_home():
+        e_acn.delete(0,"end")
+        e_pswrd.delete(0,"end")
+        e_acn.focus()
+    
+    lbl_acn=Label(frm,font=('Arial',20,'bold'),bg='pink',text='ACN')
+    lbl_acn.place(relx=.3,rely=.2)
+
+    e_acn=Entry(frm,font=('Arial',20,'bold'),bg='pink',bd=5)
+    e_acn.place(relx=.45,rely=.2)
+    e_acn.focus()
+
+    lbl_pswrd=Label(frm,font=('Arial',20,'bold'),bg='pink',text='Password')
+    lbl_pswrd.place(relx=.3,rely=.3)
+
+    e_pswrd=Entry(frm,bd=5,font=('Arial',20,'bold'),bg='pink',show="*")
+    e_pswrd.place(relx=0.45,rely=.3)
+    
+    lbl_type=Label(frm,text="User Type:",font=('Arial',20,'bold'),bg='pink')
+    lbl_type.place(relx=.3,rely=.5)
+    combo_type = ttk.Combobox(frm, 
+                            values=[
+                                    "---Select user---", 
+                                    "Customer",
+                                    "Admin",
+                                    ],font=('',20,''))
+    combo_type.current(0)
+    combo_type.place(relx=.46,rely=.5)
+    
+    lbl_btn=Button(frm,font=('Arial',20,'bold'),bd=5,text='Login',bg=win_btn_clr,command=welc)
+    lbl_btn.place(relx=.4,rely=.65)
+    
+    reset_btn=Button(frm,command=reset_home,font=('Arial',20,'bold'),bd=5,text='Reset',bg=win_btn_clr)
+    reset_btn.place(relx=.49,rely=.65)
+    
+    frgt_btn=Button(frm,font=('Arial',20,'bold'),bd=5,text="Forget password",bg=win_btn_clr,command=frgt)
+    frgt_btn.place(relx=.4,rely=.75)
+    
+    new_btn=Button(frm,font=('Arial',20,'bold'),width=14,bd=5,text='Open New ACN',bg=win_btn_clr,command=openacn_click)
+    new_btn.place(relx=.4,rely=.85)
+
+def openacn_screen():
+    frm=Frame(win)
+    frm.configure(bg='green')
+    frm.place(relx=0,rely=.15,relwidth=1,relheight=.85)
+    
+    
+    def back_click():
+        frm.destroy()
+        home_screen()
+    
+    def reset_db():
+        e_name.delete(0,"end")
+        e_pswrd.delete(0,"end")
+        e_email.delete(0,"end")
+        e_mob.delete(0,"end")
+        cb_type.delete(0,"end")
+        e_name.focus()
+        
+    def open_acc_db():
+        name=e_name.get()
+        pswrd=e_pswrd.get()
+        email=e_email.get()
+        mob=e_mob.get()
+        typ=cb_type.get()
+        open_date=time.ctime()[0:10]
+        if typ.lower()=="saving":
+            bal=1000
+        elif typ.lower()=="current":
+            bal=10000
+        else:
+            messagebox.showwarning('Account Type','please select account type')
+            return
+        #con=sqlite3.connect(database="BANKING AUTOMATION.sqlite")  # no need to write con---close() due to acn is already autoincremented but start from 1.
+       # cur=con.cursor()
+        
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute("select max(acn_no) from account")
+        acn=cur.fetchone()[0]
+        if(acn==None):
+            acn=100
+        else:
+            acn+=1
+        con.commit()
+        con.close()
+        
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute("insert into account values(%s,%s,%s,%s,%s,%s,%s,%s)",(acn,name,pswrd,email,mob,bal,open_date,typ))
+        con.commit()
+        con.close()
+        
+        messagebox.showinfo("Open Account",f"Your Account is Opened with Account no:{acn}")
+        return
+    
+    
+    back_btn=Button(frm,text='Back',font=('Arial',20,'bold','underline'),bg=win_btn_clr,command=back_click)
+    back_btn.place(relx=0,rely=0)
+    
+    lbl_name=Label(frm,font=('Arial',20,'bold','italic'),width=10,bd=5,text="User Name",bg='pink')
+    lbl_name.place(relx=.3,rely=.1)
+    
+    e_name=Entry(frm,font=('Arial',20,'bold','italic'),bd=5,)
+    e_name.place(relx=.5,rely=.1)
+    e_name.focus()
+    
+    lbl_pswrd=Label(frm,font=('Arial',20,'bold','italic'),width=10,bd=5,text="Password",bg='pink')
+    lbl_pswrd.place(relx=.3,rely=.2)
+    
+    e_pswrd=Entry(frm,font=('Arial',20,'bold','italic'),bd=5,show="*")
+    e_pswrd.place(relx=.5,rely=.2)
+    
+    lbl_email=Label(frm,font=('Arial',20,'bold','italic'),width=10,bd=5,text="E-mail",bg='pink')
+    lbl_email.place(relx=.3,rely=.3)
+    
+    e_email=Entry(frm,font=('Arial',20,'bold','italic'),bd=5)
+    e_email.place(relx=.5,rely=.3)
+    
+    lbl_mob=Label(frm,font=('Arial',20,'bold','italic'),width=10,bd=5,text="Contact",bg='pink')
+    lbl_mob.place(relx=.3,rely=.4)
+    
+    e_mob=Entry(frm,font=('Arial',20,'bold','italic'),bd=5)
+    e_mob.place(relx=.5,rely=.4)
+    
+    lbl_type=Label(frm,font=('Arial',20,'bold','italic'),width=10,bd=5,text="Type",bg='pink')
+    lbl_type.place(relx=.3,rely=.5)
+    
+    #e_type=Entry(frm,font=('Arial',20,'bold','italic'))
+    #e_type.place(relx=.5,rely=.5)
+    
+    cb_type=Combobox(frm,font=('Arial',20,'bold','italic'), values=['----Select Account----','Saving','Current'])
+    cb_type.place(relx=.5,rely=.5)
+    cb_type.current(0)
+    
+    open_bt=Button(frm,command=open_acc_db,font=('Arial',20,'bold','italic'),text="Open",bd=5,bg=win_btn_clr)
+    open_bt.place(relx=.5,rely=.6)
+    
+    reset_bt=Button(frm,command=reset_db,font=('Arial',20,'bold','italic'),text="Reset",bd=5,bg=win_btn_clr)
+    reset_bt.place(relx=.6,rely=.6)
+    
+def frgt_screen():
+    frm=Frame(win)
+    frm.configure(bg='purple')
+    frm.place(relx=0,rely=.15,relwidth=1,relheight=.85)
+    
+    def Back_click():
+        frm.destroy()
+        home_screen()
+    
+    def recover_db():
+        acn=e_acn.get()
+        email=e_email.get()
+        mob=e_Mob.get()
+    
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute(("select acn_pass from account where acn_no=%s and acn_email=%s and acn_mob=%s"),(acn,email,mob))
+        tup=cur.fetchone()
+        if(tup==None):
+            messagebox.showerror("Forget Password","Incorrect Details")
+        else:
+            messagebox.showinfo("forgot Password",f"Your Password is:{tup[0]}")
+        con.close()
+        return
+    
+    def reset():
+        e_acn.delete(0,"end")
+        e_email.delete(0,"end")
+        e_Mob.delete(0,"end")
+        e_acn.focus()
+    
+    
+    back_bt=Button(frm,font=('Arial',20,'bold','italic'),text="Back",bd=5,bg=win_btn_clr,command=Back_click)
+    back_bt.place(relx=0,rely=0)
+    
+    lbl_acn=Label(frm,font=('Arial',20,'bold','italic'),text="ACN",bd=5,width=8,bg='pink')
+    lbl_acn.place(relx=.3,rely=.1)
+    
+    e_acn=Entry(frm,font=('Arial',20,'bold','italic'),bd=5)
+    e_acn.place(relx=.45,rely=.1)    
+    e_acn.focus()
+    
+    lbl_email=Label(frm,font=('Arial',20,'bold','italic'),text="E-mail",bd=5,width=8,bg='pink')
+    lbl_email.place(relx=.3,rely=.2)
+    
+    e_email=Entry(frm,font=('Arial',20,'bold','italic'),bd=5)
+    e_email.place(relx=.45,rely=.2)
+    
+    lbl_Mob=Label(frm,font=('Arial',20,'bold','italic'),text="Mobile",bd=5,width=8,bg='pink')
+    lbl_Mob.place(relx=.3,rely=.3)
+    
+    e_Mob=Entry(frm,font=('Arial',20,'bold','italic'),bd=5)
+    e_Mob.place(relx=.45,rely=.3)
+    
+    
+    reset_bt=Button(frm,comman=reset,font=('Arial',20,'bold','italic'),bd=5,text="Reset",bg=win_btn_clr)
+    reset_bt.place(relx=.5,rely=.4)
+    
+    rec_bt=Button(frm,command=recover_db,font=('Arial',20,'bold','italic'),bd=5,text="Recover",bg=win_btn_clr)
+    rec_bt.place(relx=.6,rely=.4)
+    
+def welcome_screen():
+    frm=Frame(win)
+    frm.configure(bg='black')
+    frm.place(relx=0,rely=.15,relwidth=1,relheight=0.85)
+    
+    def home():
+        frm.destroy()
+        home_screen()
+    
+    def check_bal():
+        ifrm=Frame(frm)
+        ifrm.configure(bg="powder blue")
+        ifrm.place(relx=.3,rely=.25,relwidth=.5,relheight=.5)
+        lbl_msg.configure(text="")
+        
+        ifrm.place(relx=.3,rely=.2,relwidth=.5,relheight=.5)
+        lbl_msg.configure(text="This is Check Balance Page")
+        
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute(f"select acn_bal,acn_opendate,acn_type from account where acn_no=%s",(acn,))
+        bal,opendate,acc_type=cur.fetchone()
+        con.commit()
+        con.close()
+        l1=Label(ifrm,text=(f"Account No.:{acn}"),fg="green",bg="pink",font=("Arial",20,"bold"))  #font=("by default color")
+        l2=Label(ifrm,text=f"Account Balance:{bal}",fg="green",bg="pink",font=("Arial",20,"bold"))
+        l3=Label(ifrm,text=f"Account Open date:{opendate}",fg="green",bg="pink",font=("Arial",20,"bold"))
+        l4=Label(ifrm,text=f"Account Type:{acc_type}",fg="green",bg="pink",font=("Arial",20,"bold"))
+        l1.place(relx=.2,rely=.2)
+        l2.place(relx=.2,rely=.4)
+        l3.place(relx=.2,rely=.6)
+        l4.place(relx=.2,rely=.8)
+        
+        #l1.pack()     good to use but not in a proper alignment.
+        #l2.pack(pady=20)
+        #l3.pack(pady=20)
+        #l4.pack()
+        
+    def deposit():
+        ifrm=Frame(frm)
+        ifrm.configure(bg="powder blue")
+        ifrm.place(relx=.3,rely=.25,relwidth=.5,relheight=.5)
+        lbl_msg.configure(text="This is Deposit Page")
+        
+        def dep_db():
+            amt=float(e_amt.get())
+            con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+            cur=con.cursor()
+            cur.execute(f"select acn_bal from account where acn_no=%s",(acn,))
+            bal=cur.fetchone()[0]
+            con.commit()
+            con.close()
+            
+            con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+            cur=con.cursor()
+            cur.execute("update account set acn_bal=%s where acn_no=%s",(bal+amt,acn))
+            con.commit()
+            con.close()
+            
+            con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+            cur=con.cursor()
+            cur.execute("insert into txn values(%s,%s,%s,%s,%s)",(acn,time.ctime()[0:10],amt,"CREDIT",bal+amt))
+            con.commit()
+            con.close()
+            
+            messagebox.showinfo("Deposit","Amount Deposited")
+            return
+            
+        lbl_amt=Label(ifrm,font=("Arial",20,"bold"),fg="green",bg="red",text="Amount(to be deposited):")
+        lbl_amt.place(relx=0,rely=0)
+        
+        e_amt=Entry(ifrm,font=("Arial",20,"bold"),bd=5)
+        e_amt.place(relx=.3,rely=.2)
+        e_amt.focus()
+        
+        deposit_bt=Button(ifrm,command=dep_db,font=("Arial",20,"bold"),bd=5,text="Deposit",width=10,bg=win_btn_clr)
+        deposit_bt.place(relx=.5,rely=.4)
+        
+        
+    def withdraw():
+        ifrm=Frame(frm)
+        ifrm.configure(bg="powder blue")
+        ifrm.place(relx=.3,rely=.25,relwidth=.5,relheight=.5)
+        lbl_msg.configure(text="This is Withdraw Page")
+        
+        def withdraw_db():
+            amt=float(e_amt.get())
+            con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+            cur=con.cursor()
+            cur.execute(f"select acn_bal from account where acn_no=%s",(acn,))
+            bal=cur.fetchone()[0]
+            con.commit()
+            con.close()
+            
+            if bal>=amt:
+            
+                con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+                cur=con.cursor()
+                cur.execute("update account set acn_bal=%s where acn_no=%s",(bal-amt,acn))
+                con.commit()
+                con.close()
+
+                con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+                cur=con.cursor()
+                cur.execute("insert into txn values(%s,%s,%s,%s,%s)",(acn,time.ctime()[0:10],amt,"DEBIT",bal-amt))
+                con.commit()
+                con.close()
+
+                messagebox.showinfo("Withdraw","Amount Withdrawn")
+                return
+            
+            else:
+                
+                messagebox.showwarning("Withdraw","Insufficient Balance")
+                
+                
+        lbl_amt=Label(ifrm,font=("Arial",20,"bold"),fg="green",bg="red",text="Amount(to withdraw):")
+        lbl_amt.place(relx=0,rely=0)
+        
+        e_amt=Entry(ifrm,font=("Arial",20,"bold"),bd=5)
+        e_amt.place(relx=.3,rely=.2)
+        e_amt.focus()
+        
+        withdraw_bt=Button(ifrm,command=withdraw_db,font=("Arial",20,"bold"),bd=5,text="Withdraw",width=10,bg=win_btn_clr)
+        withdraw_bt.place(relx=.5,rely=.4)    
+        
+    def update():
+        ifrm=Frame(frm)
+        ifrm.configure(bg="powder blue")
+        ifrm.place(relx=.3,rely=.25,relwidth=.5,relheight=.5)
+        lbl_msg.configure(text="This is Update Page")
+        
+        def update_db():
+            name=e_name.get()
+            pswrd=e_pswrd.get()
+            email=e_email.get()
+            mob=e_mob.get()
+
+            con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+            cur=con.cursor()
+            cur.execute("update account set acn_name=%s,acn_pass=%s,acn_email=%s,acn_mob=%s where acn_no=%s",(name,pswrd,email,mob,acn))
+            con.commit()
+            con.close()
+            messagebox.showwarning("Update","Details Updated")
+            return
+            
+            
+        con=pymysql.connect(user="root",password="root",host="localhost",port=3306,database="Banking_Automation")
+        cur=con.cursor()
+        cur.execute(f"select acn_pass,acn_email,acn_mob from account where acn_no=%s",(acn,))
+        acn_pass,acn_email,acn_mob=cur.fetchone()
+        con.commit()
+        con.close()
+
+        lbl_name=Label(ifrm,font=('Arial',15,'bold','italic'),width=10,bd=5,text="User Name",bg='pink')
+        lbl_name.place(relx=.1,rely=.1)
+
+        e_name=Entry(ifrm,font=('Arial',15,'bold','italic'),bd=5,)
+        e_name.place(relx=.4,rely=.1)
+        e_name.insert(0,uname)
+        e_name.focus()
+
+        lbl_pswrd=Label(ifrm,font=('Arial',15,'bold','italic'),width=10,bd=5,text="Password",bg='pink')
+        lbl_pswrd.place(relx=.1,rely=.3)
+
+        e_pswrd=Entry(ifrm,font=('Arial',15,'bold','italic'),bd=5)
+        e_pswrd.place(relx=.4,rely=.3)
+        e_pswrd.insert(0,acn_pass)
+
+        lbl_email=Label(ifrm,font=('Arial',15,'bold','italic'),width=10,bd=5,text="E-mail",bg='pink')
+        lbl_email.place(relx=.1,rely=.5)
+
+        e_email=Entry(ifrm,font=('Arial',15,'bold','italic'),bd=5)
+        e_email.place(relx=.4,rely=.5)
+        e_email.insert(0,acn_email)
+
+        lbl_mob=Label(ifrm,font=('Arial',15,'bold','italic'),width=10,bd=5,text="Contact",bg='pink')
+        lbl_mob.place(relx=.1,rely=.7)
+
+        e_mob=Entry(ifrm,font=('Arial',15,'bold','italic'),bd=5)
+        e_mob.place(relx=.4,rely=.7)
+        e_mob.insert(0,acn_mob)
+
+        update_bt=Button(ifrm,command=update_db,font=('Arial',15,'bold','italic'),text="Update",bd=5,bg=win_btn_clr)
+        update_bt.place(relx=.82,rely=.65)
+
+        
+    
+        
+    check_bt=Button(frm,command=check_bal,font=('Arial',20,'bold','italic'),text="Check Balance",bd=5,width=14,bg=win_btn_clr)
+    check_bt.place(relx=0.1,rely=.2)
+    
+    dep_bt=Button(frm,command=deposit,font=('Arial',20,'bold','italic'),text="Deposit",bd=5,width=14,bg=win_btn_clr)
+    dep_bt.place(relx=0.1,rely=.3)
+    
+    wd_bt=Button(frm,command=withdraw,font=('Arial',20,'bold','italic'),text="Withdraw",bd=5,width=14,bg=win_btn_clr)
+    wd_bt.place(relx=0.1,rely=.4)
+    
+    up_bt=Button(frm,command=update,font=('Arial',20,'bold','italic'),text="Update",bd=5,width=14,bg=win_btn_clr)
+    up_bt.place(relx=0.1,rely=.5)
+    
+    logout_bt=Button(frm,font=('Arial',20,'bold','italic'),text="Logout",bd=5,width=14,bg=win_btn_clr,command=home)
+    logout_bt.place(relx=.8,rely=.1)
+    
+    lbl_text=Label(frm,font=('Arial',20,'italic','underline'),bg='red',text=f"WELCOME....:..{uname}")
+    lbl_text.place(relx=0,rely=0)
+    
+    lbl_msg=Label(frm,font=('Arial',20,'italic','underline'),fg="blue",width=30,bg='pink',text="This is Home Page")
+    lbl_msg.place(relx=.35,rely=.1)
+    
+home_screen()
+
+win.mainloop()
